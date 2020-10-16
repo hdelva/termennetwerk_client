@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Autocomplete demo</title>
+    <script src="dist/bundle.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css">
+    <style>
+
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row" style="height: 5rem">
+        </div>
+
+        <div class="row">
+            <div class="column column-80 column-offset-10">
+                <input id="autocomplete" type="text" placeholder="Ask a question">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="column column-20 column-offset-10" id="textOutput"></div>
+            <div class="column column-60" id="linkOutput" style="text-align: right;"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const autocomplete = new TreeComplete([
+            "https://termen.opoi.org/nta",
+            "https://termen.opoi.org/vtmk",
+            "https://termen.opoi.org/cht",
+            "https://termen.opoi.org/rkdartists"
+        ], 5);
+        const inputField = document.getElementById("autocomplete");
+        const textOutputElement = document.getElementById("textOutput");
+        const linkOutputElement = document.getElementById("linkOutput");
+
+        autocomplete.on("data", (arr) => {
+            textOutputElement.innerHTML = "";
+            linkOutputElement.innerHTML = "";
+            for (const quad of arr) {
+                textOutputElement.innerHTML += "<p>" + quad.object.value + "</p>";
+                linkOutputElement.innerHTML += "<p> <a href=" + quad.subject.value + ">" + quad.subject.value + "</a></p>";
+            }
+        });
+
+        inputField.addEventListener("input", function (e) {
+            var a, b, i, val = this.value;
+
+            if (!val) {
+                return false;
+            }
+
+            autocomplete.query(val);
+        });
+    </script>
+</body>
+
+</html>

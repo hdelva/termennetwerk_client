@@ -1,0 +1,25 @@
+{
+  "name": "tree_complete",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "webpack": "webpack --config webpack.config.js --mode=production"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^12.12.14",
+    "@types/typescript": "^2.0.0",
+    "collections": "^5.1.12",
+    "ldfetch": "^1.1.2",
+    "rdf": "^4.1.0",
+    "string-similarity": "^4.0.2",
+    "tinyqueue": "^2.0.3",
+    "webpack": "^4.0.0"
+  },
+  "devDependencies": {
+    "ts-loader": "^8.0.5",
+    "webpack-cli": "^4.0.0"
+  }
+}
