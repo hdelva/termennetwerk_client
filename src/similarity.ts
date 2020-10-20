@@ -69,16 +69,17 @@ export function indexSimilarity(strA: string, strB: string) {
     return cosineSimilarity(termFreqVecA, termFreqVecB);
 }
 
-export function stringSimilarity(strA: string, strB: string) {
-    var termFreqA = freqMap(strA);
-    var termFreqB = freqMap(strB);
+export function compositeSimilarity(expected: string, found: string) {
+    const minLength = Math.min(expected.length, found.length);
 
-    var dict = {};
-    addKeysToDict(termFreqA, dict);
-    addKeysToDict(termFreqB, dict);
+    let common = 0;
+    for (let i = 0; i < minLength; i++) {
+        if (found[i] == expected[i]) {
+            common += 1;
+        } else {
+            break;
+        }
+    }
 
-    var termFreqVecA = termFreqMapToVector(termFreqA, dict);
-    var termFreqVecB = termFreqMapToVector(termFreqB, dict);
-
-    return cosineSimilarity(termFreqVecA, termFreqVecB);
+    return common + indexSimilarity(expected, found);
 }

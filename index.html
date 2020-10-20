@@ -9,7 +9,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css">
     <style>
-
+        .result {
+            padding: 0.3em 0em;
+        }
     </style>
 </head>
 
@@ -25,8 +27,9 @@
         </div>
 
         <div class="row">
-            <div class="column column-20 column-offset-10" id="textOutput"></div>
-            <div class="column column-60" id="linkOutput" style="text-align: right;"></div>
+            <div class="column column-100" id="results">
+
+            </div>
         </div>
 
     </div>
@@ -39,15 +42,16 @@
             "https://termen.opoi.org/rkdartists"
         ], 10);
         const inputField = document.getElementById("autocomplete");
-        const textOutputElement = document.getElementById("textOutput");
-        const linkOutputElement = document.getElementById("linkOutput");
+        const resultsElement = document.getElementById("results");
 
         autocomplete.on("data", (arr) => {
-            textOutputElement.innerHTML = "";
-            linkOutputElement.innerHTML = "";
+            resultsElement.innerHTML = "";
             for (const quad of arr) {
-                textOutputElement.innerHTML += "<p>" + quad.object.value + "</p>";
-                linkOutputElement.innerHTML += "<p> <a href=" + quad.subject.value + ">" + quad.subject.value + "</a></p>";
+                resultsElement.innerHTML += 
+                    '<div class="row result">' 
+                    + '<div class="column column-20 column-offset-10">' + quad.object.value + "</div>" 
+                    + '<div class="column column-60" style="text-align: right;"> <a href=' + quad.subject.value + ">" + quad.subject.value + "</a></div>";
+                    + '</div>'
             }
         });
 
@@ -55,6 +59,7 @@
             var a, b, i, val = this.value;
 
             if (!val) {
+                resultsElement.innerHTML = "";
                 return false;
             }
 

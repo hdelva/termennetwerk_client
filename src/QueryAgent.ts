@@ -3,7 +3,7 @@ import { Quad } from "rdf-js";
 import TinyQueue from "tinyqueue";
 
 import IQueryEmitter from "./IQueryEmitter";
-import { indexSimilarity } from "./similarity";
+import { compositeSimilarity, indexSimilarity } from "./similarity";
 
 class RankedRelation {
     public uri: string;
@@ -40,7 +40,7 @@ export default class QueryAgent extends IQueryEmitter {
         this.fetcher = new LDFetch();
         this.activeQueries = new Set();
         this.knownRelations = new Set();
-        this.stringSimilarity = similarityFunction || indexSimilarity;
+        this.stringSimilarity = similarityFunction || compositeSimilarity;
     }
 
     public async query(input: string)  {
@@ -61,10 +61,12 @@ export default class QueryAgent extends IQueryEmitter {
         let bestSimilarity = 0;
         queue.push(new RankedRelation(this.source, 0));
         for (const relation of this.knownRelations) {
-            const similarity = this.stringSimilarity(relation.value, input);
+            const similarity = this.stringSimilarity(input, relation.value);
+            if (similarity + 1 >= bestSimilarity) {
+                queue.push(new RankedRelation(relation.uri, similarity));
+            }
             if (similarity >= bestSimilarity) {
                 bestSimilarity = similarity;
-                queue.push(new RankedRelation(relation.uri, similarity));
             }
         }
 
@@ -77,10 +79,10 @@ export default class QueryAgent extends IQueryEmitter {
                 continue;
             }
             const {uri: page, score} = blob;
-            if (score < bestSimilarity) {
+            if (score + 1 < bestSimilarity) {
                 continue;
             }
-            console.log("fetching", page);
+            // console.log("fetching", page);
             const data = await this.fetcher.get(page);
 
             const nodes = {};
