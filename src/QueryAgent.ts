@@ -49,8 +49,7 @@ export default class QueryAgent extends IQueryEmitter {
                 // we're now looking for something more specific
                 this.activeQueries.delete(runningQuery);
             } else if (runningQuery.startsWith(input)) {
-                // we're already looking for something more specific
-                return;
+                this.activeQueries.delete(runningQuery);
             }
         }
         this.activeQueries.add(input);
@@ -114,6 +113,8 @@ export default class QueryAgent extends IQueryEmitter {
                 }
             }
         }
+
+        this.activeQueries.delete(input);
 
         this.emit("end", input);
     }

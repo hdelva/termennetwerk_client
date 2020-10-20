@@ -40,7 +40,7 @@ export default class SortedView extends IQueryEmitter {
         const value = quad.object.value.toLowerCase()
         const similarity = -1 * stringSimilarity.compareTwoStrings(this.activeQuery, value);
 
-        if (similarity < similarityThreshold) {
+        if (similarity < similarityThreshold || this.currentBest.length < this.size) {
             this.currentBest.push([similarity, quad.object.value, quad]);
             this.emitUpdate();
         }
