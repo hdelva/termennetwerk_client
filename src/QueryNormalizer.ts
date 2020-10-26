@@ -1,6 +1,6 @@
 import IQueryEmitter from "./IQueryEmitter";
 
-export default class QueryTokenizer extends IQueryEmitter {
+export default class QueryNormalizer extends IQueryEmitter {
     protected subEmitter: IQueryEmitter;
 
     constructor(subEmitter: IQueryEmitter) {
@@ -13,9 +13,7 @@ export default class QueryTokenizer extends IQueryEmitter {
     }
 
     public async query(input: string) {
-        const tokens = input.split(/\s+/).filter(Boolean);
-        for (const token of tokens) {
-            this.subEmitter.query(token);
-        }
+        
+        this.subEmitter.query(input);
     }
 }
