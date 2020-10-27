@@ -25,7 +25,7 @@ export default class AutoCompleteWorker extends IQueryEmitter {
 }
 */
 
-
+/*
 import AutoComplete from "./AutoComplete";
 
 
@@ -42,6 +42,7 @@ x.on("data", (d) => {
     }
     console.log("");
 });
-x.query("Métérié");
+x.query("anne frank");
+//x.query("Métérié");
 //x.query("vincent van go");
-
+*/

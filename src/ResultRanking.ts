@@ -4,65 +4,14 @@ import { Quad } from "rdf-js";
 
 import IQueryEmitter from "./IQueryEmitter";
 import INormalizer from "./normalizers/INormalizer";
-
-type SimilarityFunction = (a: string, b: string) => number[];
-
-function asymetricCompare(expected: string, found: string) {
-    if (!expected.length || !found.length) {
-        return [0, 0, found.length];
-    };
-
-    const expectedTokens = expected.split(/\s/);
-    const foundTokens = found.split(/\s/);
-
-    let score = 0;
-    for (const expectedToken of expectedTokens) {
-        for (const foundToken of foundTokens) {
-            if (foundToken.startsWith(expectedToken)) {
-                score += 1;
-                break;
-            }
-        }
-    }
-
-    let firstBigrams = new Map();
-    for (const expectedToken of expectedTokens) {
-        for (let i = 0; i < expectedToken.length - 1; i++) {
-            const bigram = expectedToken.substring(i, i + 2);
-            const count = firstBigrams.has(bigram)
-                ? firstBigrams.get(bigram) + 1
-                : 1;
-
-            firstBigrams.set(bigram, count);
-        };
-    }
-
-    let intersectionSize = 0;
-    for (const foundToken of foundTokens) {
-        for (let i = 0; i < foundToken.length - 1; i++) {
-            const bigram = foundToken.substring(i, i + 2);
-            const count = firstBigrams.has(bigram)
-                ? firstBigrams.get(bigram)
-                : 0;
-
-            if (count > 0) {
-                firstBigrams.set(bigram, count - 1);
-                intersectionSize++;
-            }
-        }
-    }
-
-    const maxIntersections = Math.max(firstBigrams.size, 1)
-
-    return [-1 * score, -1 * intersectionSize / maxIntersections, found.length];
-}
+import { SimilarityConfiguration } from "./similarity/SimilarityConfiguration";
 
 export default class ResultRanking extends IQueryEmitter {
     protected subEmitter: IQueryEmitter;
     protected activeQuery: string;
     protected size: number;
     protected currentBest: typeof SortedArray;
-    protected similarityFunction: SimilarityFunction;
+    protected similarityConfigurations: SimilarityConfiguration[];
 
     protected normalizer: INormalizer;
 
@@ -70,13 +19,13 @@ export default class ResultRanking extends IQueryEmitter {
         size: number,
         subEmitter: IQueryEmitter,
         normalizer: INormalizer,
-        similarityFunction?: SimilarityFunction,
+        similarityConfigurations: SimilarityConfiguration[],
     ) {
         super();
 
         this.size = size;
         this.normalizer = normalizer;
-        this.similarityFunction = similarityFunction || asymetricCompare;
+        this.similarityConfigurations = similarityConfigurations;
 
         this.activeQuery = "";
         this.currentBest = new SortedArray();
@@ -97,22 +46,55 @@ export default class ResultRanking extends IQueryEmitter {
     }
 
     protected processQuad(quad: Quad) {
-        let threshold = [];
+        let thresholdVector = undefined;
         if (this.currentBest.length > 0) {
             const relevantIndex = Math.min(this.size, this.currentBest.length);
-            threshold = this.currentBest.toArray()[relevantIndex - 1];
+            thresholdVector = this.currentBest.toArray()[relevantIndex - 1];
         }
 
         let value = this.normalizer.normalize(quad.object.value);
 
-        const similarity = this.similarityFunction(this.activeQuery, value);
-        const competitor = [...similarity, quad.object.value.toLocaleLowerCase(), quad];
+        if (value == "frank anne") {
+            let i = 0;
+        }
 
-        let better = this.currentBest.contentCompare(threshold, competitor) > 0;
+        let better = false;
+        let similarityVector: number[] = [];
+        for (let i = 0; i < this.similarityConfigurations.length; i++) {
+            const configuration = this.similarityConfigurations[i];
 
-        if (better || this.currentBest.length < this.size) {
-            this.currentBest.push(competitor);
-            this.emitUpdate();
+            // flip sign, because we order increasingly
+            const similarity = -1 * configuration.evaluate(this.activeQuery, value);
+
+            if (
+                !thresholdVector // everything is better than nothing
+                || similarity < thresholdVector[i] // an actual improvement
+            ) {
+                better = true;
+            }
+
+            if (
+                better // we're competing the vector
+                || thresholdVector && similarity === thresholdVector[i] // still a tie 
+            ) {
+                similarityVector.push(similarity);
+            } else {
+                // not an improvement, stop evaluating
+                break;
+            }
+        }
+
+        if (similarityVector.length === this.similarityConfigurations.length) {
+            // all configured metrics are as good as the threshold value
+            // add the string value and quad object as tie breakers
+            const fullVector = [...similarityVector, value, quad];
+
+            let better = this.currentBest.contentCompare(thresholdVector, fullVector) > 0;
+
+            if (better || this.currentBest.length < this.size) {
+                this.currentBest.push(fullVector);
+                this.emitUpdate();
+            }
         }
     }
 
