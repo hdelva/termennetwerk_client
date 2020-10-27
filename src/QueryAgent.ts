@@ -31,14 +31,36 @@ export default class QueryAgent extends IQueryEmitter {
         this.activeQueries = new Set();
         this.knownRelations = new Map();
         this.stringSimilarity = similarityFunction || strictPrefixSimilarity;
+
+        this.prefetch();
+    }
+
+    private async prefetch() {
+        const data = await this.fetcher.get(this.source);
+
+        const nodes = {};
+        const nodeValues = {};
+
+        for (const untyped_quad of data.triples) {
+            const quad: Quad = untyped_quad;
+
+            if (quad.predicate.value == "https://w3id.org/tree#node") {
+                nodes[quad.subject.value] = quad.object.value;
+            } else if (quad.predicate.value == "https://w3id.org/tree#value") {
+                nodeValues[quad.subject.value] = quad.object.value;
+            }
+        }
+
+        for (const key of Object.keys(nodes)) {
+            const value = nodeValues[key];
+            this.knownRelations.set(nodes[key], value);
+        }
     }
 
     public async query(input: string)  {
         for (const runningQuery of this.activeQueries) {
-            if (input.startsWith(runningQuery)) {
-                // we're now looking for something more specific
-                this.activeQueries.delete(runningQuery);
-            } else if (runningQuery.startsWith(input)) {
+            if (input.startsWith(runningQuery) || runningQuery.startsWith(input)) {
+                // this query has been changed
                 this.activeQueries.delete(runningQuery);
             }
         }
