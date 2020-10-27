@@ -32,14 +32,14 @@ export default class QueryAgent extends IQueryEmitter {
     protected fetcher: LDFetch;
     protected activeQueries: Set<string>;
     protected stringSimilarity: SimilarityFunction;
-    protected knownRelations: Set<Relation>;
+    protected knownRelations: Map<string, string>; // URI -> value
 
     constructor(source: string, similarityFunction?: SimilarityFunction) {
         super();
         this.source = source;
         this.fetcher = new LDFetch();
         this.activeQueries = new Set();
-        this.knownRelations = new Set();
+        this.knownRelations = new Map();
         this.stringSimilarity = similarityFunction || compositeSimilarity;
     }
 
@@ -60,10 +60,10 @@ export default class QueryAgent extends IQueryEmitter {
 
         let bestSimilarity = 0;
         queue.push(new RankedRelation(this.source, 0));
-        for (const relation of this.knownRelations) {
-            const similarity = this.stringSimilarity(input, relation.value);
-            if (similarity + 1 >= bestSimilarity) {
-                queue.push(new RankedRelation(relation.uri, similarity));
+        for (const [uri, value] of this.knownRelations.entries()) {
+            const similarity = this.stringSimilarity(input, value);
+            if (similarity >= bestSimilarity) {
+                queue.push(new RankedRelation(uri, similarity));
             }
             if (similarity >= bestSimilarity) {
                 bestSimilarity = similarity;
@@ -79,7 +79,7 @@ export default class QueryAgent extends IQueryEmitter {
                 continue;
             }
             const {uri: page, score} = blob;
-            if (score + 1 < bestSimilarity) {
+            if (score < bestSimilarity) {
                 continue;
             }
             // console.log("fetching", page);
@@ -106,6 +106,7 @@ export default class QueryAgent extends IQueryEmitter {
 
             for (const key of Object.keys(nodes)) {
                 const value = nodeValues[key];
+                this.knownRelations.set(nodes[key], value);
                 if (value) {
                     const similarity = this.stringSimilarity(value, input);
                     if (similarity >= bestSimilarity) {

@@ -1,40 +1,34 @@
 
 import IQueryEmitter from "./IQueryEmitter";
-import QueryAgent from "./QueryAgent";
-import QueryAggregator from "./QueryAggregator";
-import QueryNormalizer from "./QueryNormalizer";
-import QueryTokenizer from "./QueryTokenizer";
-import SortedView from "./SortedView";
-import UniqueFilter from "./UniqueFilter";
 
-export default class AutoComplete extends IQueryEmitter {
-    protected subEmitter: IQueryEmitter;
+import Worker from "./workers/worker.js";
+import * as RdfString from "rdf-string";
 
-    constructor(sources: string[], size: number) {
+export default class AutoCompleteWorker extends IQueryEmitter {
+    protected worker: Worker;
+
+    constructor() {
         super();
+        this.worker = new Worker();
 
-        const agents: IQueryEmitter[] = [];
-        for (const source of sources) {
-            agents.push(new QueryAgent(source));
+        const self = this;
+        this.worker.onmessage = (e) => {
+            const r = [];
+            for (const s of e.data) {
+                r.push(RdfString.stringQuadToQuad(s));
+            }
+            self.emit("data", r);
         }
 
-        const aggregator = new QueryAggregator(agents);
-        const tokenizer = new QueryTokenizer(aggregator);
-        const filter = new UniqueFilter(tokenizer);
-        const sorted = new SortedView(size, filter);
-        const normalizer = new QueryNormalizer(sorted);
-        this.subEmitter = normalizer;
-
-        this.subEmitter.on("data", (data) => this.emit("data", data));
-        this.subEmitter.on("end", (data) => this.emit("end", data));
     }
-
     public async query(input: string) {
-        this.subEmitter.query(input);
+        this.worker.postMessage(input);
     }
 }
 
 /*
+let a = false;
+
 const x = new AutoComplete([
     "https://termen.opoi.org/nta",
     "https://termen.opoi.org/rkdartists",
@@ -44,10 +38,17 @@ const x = new AutoComplete([
 
 x.on("data", (d) => {
     for (const a of d) {
-        // /console.log(a.object.value);
+        console.log(a.object.value);
     }
-    //console.log("");
+    console.log("");
 });
-//x.query("Métérié");
-x.query("vincent van go");
+x.on("end", (d) => {
+    if (a == false) {
+        x.query("Métérié");
+    }
+    a = true;
+    
+});
+x.query("Météri");
+//x.query("vincent van go");
 */

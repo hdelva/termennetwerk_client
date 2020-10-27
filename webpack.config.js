@@ -8,8 +8,16 @@ const browserConfig = {
         rules: [
             {
                 test: /\.ts$/,
-                use: "ts-loader",
-                exclude: /node_modules/
+                use: {
+                    loader: "ts-loader",
+                },
+                exclude: /node_modules/, 
+            }, {
+                test: /worker\.js$/,
+                use: { 
+                    loader: 'worker-loader',
+                    options: { inline: 'fallback' },
+                },
             }
         ],
     },
