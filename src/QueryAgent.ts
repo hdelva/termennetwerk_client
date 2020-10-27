@@ -3,7 +3,7 @@ import { Quad } from "rdf-js";
 import TinyQueue from "tinyqueue";
 
 import IQueryEmitter from "./IQueryEmitter";
-import { compositeSimilarity, indexSimilarity } from "./similarity";
+import strictPrefixSimilarity from "./similarity/strictPrefix";
 
 class RankedRelation {
     public uri: string;
@@ -12,16 +12,6 @@ class RankedRelation {
     constructor(uri, score) {
         this.uri = uri;
         this.score = score;
-    }
-}
-
-class Relation {
-    public uri: string;
-    public value: string;
-
-    constructor(uri, value) {
-        this.uri = uri;
-        this.value = value;
     }
 }
 
@@ -40,7 +30,7 @@ export default class QueryAgent extends IQueryEmitter {
         this.fetcher = new LDFetch();
         this.activeQueries = new Set();
         this.knownRelations = new Map();
-        this.stringSimilarity = similarityFunction || compositeSimilarity;
+        this.stringSimilarity = similarityFunction || strictPrefixSimilarity;
     }
 
     public async query(input: string)  {
@@ -64,8 +54,6 @@ export default class QueryAgent extends IQueryEmitter {
             const similarity = this.stringSimilarity(input, value);
             if (similarity >= bestSimilarity) {
                 queue.push(new RankedRelation(uri, similarity));
-            }
-            if (similarity >= bestSimilarity) {
                 bestSimilarity = similarity;
             }
         }
@@ -82,7 +70,6 @@ export default class QueryAgent extends IQueryEmitter {
             if (score < bestSimilarity) {
                 continue;
             }
-            // console.log("fetching", page);
             const data = await this.fetcher.get(page);
 
             const nodes = {};
@@ -108,7 +95,7 @@ export default class QueryAgent extends IQueryEmitter {
                 const value = nodeValues[key];
                 this.knownRelations.set(nodes[key], value);
                 if (value) {
-                    const similarity = this.stringSimilarity(value, input);
+                    const similarity = this.stringSimilarity(input, value);
                     if (similarity >= bestSimilarity) {
                         bestSimilarity = similarity;
                         queue.push(new RankedRelation(nodes[key], similarity));

@@ -1,10 +1,10 @@
 import IQueryEmitter from "./IQueryEmitter";
+import NKFD from "./normalizers/NFKD";
 import QueryAgent from "./QueryAgent";
 import QueryAggregator from "./QueryAggregator";
-import QueryNormalizer from "./QueryNormalizer";
 import QueryTokenizer from "./QueryTokenizer";
-import SortedView from "./SortedView";
-import UniqueFilter from "./UniqueFilter";
+import ResultRanking from "./ResultRanking";
+import ResultUniqueFilter from "./ResultUniqueFilter";
 
 export default class AutoComplete extends IQueryEmitter {
     protected subEmitter: IQueryEmitter;
@@ -19,10 +19,9 @@ export default class AutoComplete extends IQueryEmitter {
 
         const aggregator = new QueryAggregator(agents);
         const tokenizer = new QueryTokenizer(aggregator);
-        const filter = new UniqueFilter(tokenizer);
-        const sorted = new SortedView(size, filter);
-        const normalizer = new QueryNormalizer(sorted);
-        this.subEmitter = normalizer;
+        const filter = new ResultUniqueFilter(tokenizer);
+        const sorted = new ResultRanking(size, filter, new NKFD());
+        this.subEmitter = sorted;
 
         this.subEmitter.on("data", (data) => this.emit("data", data));
         this.subEmitter.on("end", (data) => this.emit("end", data));

@@ -2,7 +2,7 @@ import { Quad } from "rdf-js";
 
 import IQueryEmitter from "./IQueryEmitter";
 
-export default class UniqueFilter extends IQueryEmitter {
+export default class ResultUniqueFilter extends IQueryEmitter {
     protected subEmitter: IQueryEmitter;
     protected known: Set<string>;
 

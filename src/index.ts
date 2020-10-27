@@ -1,9 +1,7 @@
+export { default } from "./AutoComplete";
 
-import IQueryEmitter from "./IQueryEmitter";
 
-import Worker from "./workers/worker.js";
-import * as RdfString from "rdf-string";
-
+/*
 export default class AutoCompleteWorker extends IQueryEmitter {
     protected worker: Worker;
 
@@ -25,9 +23,11 @@ export default class AutoCompleteWorker extends IQueryEmitter {
         this.worker.postMessage(input);
     }
 }
+*/
 
-/*
-let a = false;
+
+import AutoComplete from "./AutoComplete";
+
 
 const x = new AutoComplete([
     "https://termen.opoi.org/nta",
@@ -42,13 +42,6 @@ x.on("data", (d) => {
     }
     console.log("");
 });
-x.on("end", (d) => {
-    if (a == false) {
-        x.query("Métérié");
-    }
-    a = true;
-    
-});
-x.query("Météri");
+x.query("Métérié");
 //x.query("vincent van go");
-*/
+

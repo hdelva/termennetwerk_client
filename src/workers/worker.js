@@ -1,4 +1,9 @@
 import AutoComplete from "../AutoComplete";
+import Builder from "../Builder";
+
+const BUILDER = Builder.getInstance();
+console.log(BUILDER.getFunction());
+
 import * as RdfString from "rdf-string";
 
 const client = new AutoComplete([
