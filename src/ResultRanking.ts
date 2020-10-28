@@ -33,16 +33,20 @@ export default class ResultRanking extends IQueryEmitter {
         const self = this;
         this.subEmitter = subEmitter;
         this.subEmitter.on("data", (q) => self.processQuad(q));
+        this.subEmitter.on("reset", () => self.reset());
         this.subEmitter.on("end", (uri) => self.emit("end", uri));
     }
 
     public async query(input: string) {
-        this.currentBest = new SortedArray();
-
         input = this.normalizer.normalize(input);
 
         this.activeQuery = input;
         this.subEmitter.query(input);
+    }
+
+    protected reset() {
+        this.currentBest = new SortedArray();
+        this.emit("reset");
     }
 
     protected processQuad(quad: Quad) {
@@ -54,29 +58,30 @@ export default class ResultRanking extends IQueryEmitter {
 
         let value = this.normalizer.normalize(quad.object.value);
 
-        if (value == "frank anne") {
-            let i = 0;
-        }
-
         let better = false;
+        let eligible = true;
         let similarityVector: number[] = [];
         for (let i = 0; i < this.similarityConfigurations.length; i++) {
             const configuration = this.similarityConfigurations[i];
 
             // flip sign, because we order increasingly
-            const similarity = -1 * configuration.evaluate(this.activeQuery, value);
+            let similarity = -1 * configuration.evaluate(this.activeQuery, value);
+
+            // it's not similar enough to include in the results
+            if (isNaN(similarity)) {
+                eligible = false;
+                break;
+            }
 
             if (
-                !thresholdVector // everything is better than nothing
-                || similarity < thresholdVector[i] // an actual improvement
+                !thresholdVector ||
+                similarity < thresholdVector[i] ||
+                this.currentBest.length < this.size
             ) {
                 better = true;
             }
 
-            if (
-                better // we're competing the vector
-                || thresholdVector && similarity === thresholdVector[i] // still a tie 
-            ) {
+            if (better || thresholdVector && similarity === thresholdVector[i]) {
                 similarityVector.push(similarity);
             } else {
                 // not an improvement, stop evaluating
@@ -84,7 +89,7 @@ export default class ResultRanking extends IQueryEmitter {
             }
         }
 
-        if (similarityVector.length === this.similarityConfigurations.length) {
+        if (eligible && similarityVector.length === this.similarityConfigurations.length) {
             // all configured metrics are as good as the threshold value
             // add the string value and quad object as tie breakers
             const fullVector = [...similarityVector, value, quad];
@@ -99,7 +104,10 @@ export default class ResultRanking extends IQueryEmitter {
     }
 
     protected emitUpdate() {
+        this.emit("reset");
         const output = this.currentBest.toArray().slice(0, this.size);
-        this.emit("data", output.map((o) => o[o.length - 1]));
+        for (const vector of output) {
+            this.emit("data", vector[vector.length - 1]);
+        }
     }
 }

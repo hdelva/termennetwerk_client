@@ -11,10 +11,10 @@ export class SimilarityConfiguration {
 
     public evaluate(expected: string, found: string) {
         const similarity = this.similarityFunction(expected, found);
-        
+
         if (this.filterFunction) {
             if (!this.filterFunction(expected, found, similarity)) {
-                return 0;
+                return NaN;
             }
         }
 

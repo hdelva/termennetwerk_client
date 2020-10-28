@@ -44,15 +44,19 @@
         const inputField = document.getElementById("autocomplete");
         const resultsElement = document.getElementById("results");
 
-        autocomplete.on("data", (arr) => {
+        autocomplete.on("reset", () => {
             resultsElement.innerHTML = "";
-            for (const quad of arr) {
-                resultsElement.innerHTML += 
-                    '<div class="row result">' 
-                    + '<div class="column column-20 column-offset-10">' + quad.object.value + "</div>" 
-                    + '<div class="column column-60" style="text-align: right;"> <a href=' + quad.subject.value + ">" + quad.subject.value + "</a></div>";
-                    + '</div>'
+        });
+
+        autocomplete.on("data", (quad) => {
+            if (resultsElement.innerHTML.length > 0) {
+                resultsElement.innerHTML += '<hr style="margin: 0">'
             }
+            resultsElement.innerHTML += 
+                '<div class="row result">' 
+                + '<div class="column column-20 column-offset-10">' + quad.object.value + "</div>" 
+                + '<div class="column column-60" style="text-align: right;"> <a href=' + quad.subject.value + ">" + quad.subject.value + "</a></div>";
+                + '</div>'
         });
 
         inputField.addEventListener("input", function (e) {

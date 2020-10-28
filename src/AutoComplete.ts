@@ -17,6 +17,10 @@ function strictPrefix(expected: string, found: string): number {
     return tokenwiseCompare(strictPrefixSimilarity, found, expected);
 }
 
+function prefixFilter(expected: string, found: string, similarity: number): boolean {
+    return expected.replace(/\p{Z}/gu, "").length === similarity;
+}
+
 function prefix(expected: string, found: string): number {
     return tokenwiseCompare(commonPrefixSimilarity, expected, found);
 }
@@ -28,6 +32,18 @@ function dice(expected: string, found: string): number {
 function length(expected: string, found: string): number {
     return -1 * found.length;
 }
+
+const fuzzyConfig = [
+    new SimilarityConfiguration(prefix),
+    new SimilarityConfiguration(dice),
+    new SimilarityConfiguration(length),
+]
+
+const strictConfig = [
+    new SimilarityConfiguration(strictPrefix, prefixFilter),
+    new SimilarityConfiguration(dice),
+    new SimilarityConfiguration(length),
+]
 
 export default class AutoComplete extends IQueryEmitter {
     protected subEmitter: IQueryEmitter;
@@ -48,16 +64,13 @@ export default class AutoComplete extends IQueryEmitter {
             size,
             filter,
             new NKFD(),
-            [
-                new SimilarityConfiguration(prefix),
-                new SimilarityConfiguration(dice),
-                new SimilarityConfiguration(length),
-            ]
+            strictConfig
         );
         this.subEmitter = sorted;
 
         this.subEmitter.on("data", (data) => this.emit("data", data));
         this.subEmitter.on("end", (data) => this.emit("end", data));
+        this.subEmitter.on("reset", () => this.emit("reset"));
     }
 
     public async query(input: string) {

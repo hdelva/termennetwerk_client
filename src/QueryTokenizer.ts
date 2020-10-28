@@ -9,6 +9,7 @@ export default class QueryTokenizer extends IQueryEmitter {
 
         const self = this;
         this.subEmitter.on("data", (q) => self.emit("data", q));
+        this.subEmitter.on("reset", (q) => self.emit("reset", q));
         this.subEmitter.on("end", (uri) => self.emit("end", uri));
     }
 

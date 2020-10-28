@@ -3,6 +3,7 @@ import { Quad } from "rdf-js";
 import TinyQueue from "tinyqueue";
 
 import IQueryEmitter from "./IQueryEmitter";
+import { commonPrefixSimilarity } from "./similarity/commonPrefix";
 import strictPrefixSimilarity from "./similarity/strictPrefix";
 
 class RankedRelation {
@@ -58,6 +59,9 @@ export default class QueryAgent extends IQueryEmitter {
     }
 
     public async query(input: string)  {
+        // signal other components to reset their internal state
+        this.emit("reset");
+
         for (const runningQuery of this.activeQueries) {
             if (input.startsWith(runningQuery) || runningQuery.startsWith(input)) {
                 // this query has been changed

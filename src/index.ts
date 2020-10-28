@@ -28,7 +28,6 @@ export default class AutoCompleteWorker extends IQueryEmitter {
 /*
 import AutoComplete from "./AutoComplete";
 
-
 const x = new AutoComplete([
     "https://termen.opoi.org/nta",
     "https://termen.opoi.org/rkdartists",
@@ -36,13 +35,17 @@ const x = new AutoComplete([
     "https://termen.opoi.org/vtmk"],
     10);
 
-x.on("data", (d) => {
-    for (const a of d) {
-        console.log(a.object.value);
-    }
+x.on("reset", () => {
     console.log("");
+})
+
+x.on("data", (d) => {
+    console.log(d.object.value);
 });
-x.query("anne frank");
-//x.query("Métérié");
+
+//x.query("ver");
+
+
+x.query("Métérié");
 //x.query("vincent van go");
 */

@@ -13,12 +13,17 @@ export default class ResultUniqueFilter extends IQueryEmitter {
 
         const self = this;
         this.subEmitter.on("data", (q) => self.processQuad(q));
+        this.subEmitter.on("reset", () => self.reset());
         this.subEmitter.on("end", (uri) => self.emit("end", uri));
     }
 
     public async query(input: string) {
-        this.known = new Set();
+        this.emit("reset");
         this.subEmitter.query(input);
+    }
+
+    protected reset() {
+        this.known = new Set();
     }
 
     protected processQuad(quad: Quad) {

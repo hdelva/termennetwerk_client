@@ -12,6 +12,7 @@ export default class QueryAggregator extends IQueryEmitter {
         const self = this;
         for (const source of this.singleSourceAgents) {
             source.on("data", (q) => self.emit("data", q));
+            source.on("reset", () => self.emit("reset"));
             source.on("end", (q) => self.processEnd(q));
         }
     }
