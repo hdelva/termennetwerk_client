@@ -45,6 +45,10 @@ const strictConfig = [
     new SimilarityConfiguration(length),
 ]
 
+const strictRelationConfig = [
+    new SimilarityConfiguration(strictPrefixSimilarity),
+]
+
 export default class AutoComplete extends IQueryEmitter {
     protected subEmitter: IQueryEmitter;
 
@@ -53,7 +57,7 @@ export default class AutoComplete extends IQueryEmitter {
 
         const agents: IQueryEmitter[] = [];
         for (const source of sources) {
-            agents.push(new QueryAgent(source));
+            agents.push(new QueryAgent(source, strictRelationConfig));
         }
 
         const aggregator = new QueryAggregator(agents);

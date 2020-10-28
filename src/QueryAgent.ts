@@ -4,34 +4,33 @@ import TinyQueue from "tinyqueue";
 
 import IQueryEmitter from "./IQueryEmitter";
 import { commonPrefixSimilarity } from "./similarity/commonPrefix";
+import { SimilarityConfiguration } from "./similarity/SimilarityConfiguration";
 import strictPrefixSimilarity from "./similarity/strictPrefix";
 
 class RankedRelation {
     public uri: string;
-    public score: number;
+    public scores: number[];
 
-    constructor(uri, score) {
+    constructor(uri, scores) {
         this.uri = uri;
-        this.score = score;
+        this.scores = scores;
     }
 }
-
-type SimilarityFunction = (a: string, b: string) => number;
 
 export default class QueryAgent extends IQueryEmitter {
     protected source: string;
     protected fetcher: LDFetch;
     protected activeQueries: Set<string>;
-    protected stringSimilarity: SimilarityFunction;
+    protected similarityConfigurations: SimilarityConfiguration[];
     protected knownRelations: Map<string, string>; // URI -> value
 
-    constructor(source: string, similarityFunction?: SimilarityFunction) {
+    constructor(source: string, similarityConfigurations: SimilarityConfiguration[]) {
         super();
         this.source = source;
         this.fetcher = new LDFetch();
         this.activeQueries = new Set();
         this.knownRelations = new Map();
-        this.stringSimilarity = similarityFunction || strictPrefixSimilarity;
+        this.similarityConfigurations = similarityConfigurations; // || strictPrefixSimilarity;
 
         this.prefetch();
     }
@@ -58,7 +57,7 @@ export default class QueryAgent extends IQueryEmitter {
         }
     }
 
-    public async query(input: string)  {
+    public async query(input: string) {
         // signal other components to reset their internal state
         this.emit("reset");
 
@@ -71,16 +70,24 @@ export default class QueryAgent extends IQueryEmitter {
         this.activeQueries.add(input);
 
         const queue: TinyQueue<RankedRelation> = new TinyQueue([], (a: RankedRelation, b: RankedRelation) => {
-            return b.score - a.score;
+            if (a.scores > b.scores) {
+                return -1;
+            } else if (b.scores > a.scores) {
+                return 1;
+            } else if (a.uri > b.uri) {
+                return -1
+            } else {
+                return 1;
+            }
         });
 
-        let bestSimilarity = 0;
+        let bestSimilarity: number[] | null = null;
         queue.push(new RankedRelation(this.source, 0));
         for (const [uri, value] of this.knownRelations.entries()) {
-            const similarity = this.stringSimilarity(input, value);
-            if (similarity >= bestSimilarity) {
-                queue.push(new RankedRelation(uri, similarity));
-                bestSimilarity = similarity;
+            const similarityScores = this.similarityConfigurations.map((c) => c.evaluate(input, value));
+            if (!bestSimilarity || similarityScores >= bestSimilarity) {
+                queue.push(new RankedRelation(uri, similarityScores));
+                bestSimilarity = similarityScores;
             }
         }
 
@@ -92,10 +99,11 @@ export default class QueryAgent extends IQueryEmitter {
             if (!blob) {
                 continue;
             }
-            const {uri: page, score} = blob;
-            if (score < bestSimilarity) {
+            const { uri: page, scores } = blob;
+            if (bestSimilarity && scores < bestSimilarity) {
                 continue;
             }
+            console.log("fetching", page);
             const data = await this.fetcher.get(page);
 
             const nodes = {};
@@ -121,10 +129,10 @@ export default class QueryAgent extends IQueryEmitter {
                 const value = nodeValues[key];
                 this.knownRelations.set(nodes[key], value);
                 if (value) {
-                    const similarity = this.stringSimilarity(input, value);
-                    if (similarity >= bestSimilarity) {
-                        bestSimilarity = similarity;
-                        queue.push(new RankedRelation(nodes[key], similarity));
+                    const similarityScores = this.similarityConfigurations.map((c) => c.evaluate(input, value));
+                    if (!bestSimilarity || similarityScores >= bestSimilarity) {
+                        bestSimilarity = similarityScores;
+                        queue.push(new RankedRelation(nodes[key], similarityScores));
                     }
                 }
             }
