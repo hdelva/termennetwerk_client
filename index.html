@@ -59,6 +59,10 @@
                 + '</div>'
         });
 
+        autocomplete.on("end", (quad) => {
+            resultsElement.innerHTML += '<hr style="margin: 0">'
+        });
+
         inputField.addEventListener("input", function (e) {
             var a, b, i, val = this.value;
 

@@ -46,6 +46,6 @@ x.on("data", (d) => {
 //x.query("ver");
 
 
-x.query("Métérié");
-//x.query("vincent van go");
+//x.query("Métérié");
+x.query("vincent van go");
 */

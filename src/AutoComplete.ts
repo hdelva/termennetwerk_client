@@ -14,6 +14,10 @@ function strictRelationPrefix(expected: string, found: string): number {
     return tokenwiseCompare(strictPrefixSimilarity, expected, found);
 }
 
+function strictRelationFilter(expected: string, found: string, similarity: number): boolean {
+    return similarity > 0;
+}
+
 function strictResultPrefix(expected: string, found: string): number {
     // flip expected and found
     // we want `expected` to be a prefix of `found` 
@@ -49,7 +53,7 @@ const strictConfig = [
 ]
 
 const strictRelationConfig = [
-    new SimilarityConfiguration(strictRelationPrefix),
+    new SimilarityConfiguration(strictRelationPrefix, strictRelationFilter),
 ]
 
 export default class AutoComplete extends IQueryEmitter {

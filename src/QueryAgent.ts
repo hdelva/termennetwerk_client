@@ -3,9 +3,7 @@ import { Quad } from "rdf-js";
 import TinyQueue from "tinyqueue";
 
 import IQueryEmitter from "./IQueryEmitter";
-import { commonPrefixSimilarity } from "./similarity/commonPrefix";
 import { SimilarityConfiguration } from "./similarity/SimilarityConfiguration";
-import strictPrefixSimilarity from "./similarity/strictPrefix";
 
 class RankedRelation {
     public uri: string;
@@ -14,6 +12,22 @@ class RankedRelation {
     constructor(uri, scores) {
         this.uri = uri;
         this.scores = scores;
+    }
+}
+
+function compareSimilarities(a: RankedRelation, b: RankedRelation): number {
+    for (let i = 0; i < a.scores.length; i++) {
+        if (a.scores[i] > b.scores[i]) {
+            return -1;
+        } else if (a.scores[i] < b.scores[i]) {
+            return 1;
+        }
+    }
+
+    if (a.uri > b.uri) {
+        return 1;
+    } else {
+        return -1;
     }
 }
 
@@ -69,40 +83,46 @@ export default class QueryAgent extends IQueryEmitter {
         }
         this.activeQueries.add(input);
 
-        const queue: TinyQueue<RankedRelation> = new TinyQueue([], (a: RankedRelation, b: RankedRelation) => {
-            if (a.scores > b.scores) {
-                return -1;
-            } else if (b.scores > a.scores) {
-                return 1;
-            } else if (a.uri > b.uri) {
-                return -1
-            } else {
-                return 1;
-            }
-        });
+        const queue: TinyQueue<RankedRelation> = new TinyQueue([], compareSimilarities);
 
-        let bestSimilarity: number[] | null = null;
-        queue.push(new RankedRelation(this.source, 0));
+        if (this.knownRelations.size === 0) {
+            queue.push(new RankedRelation(this.source, 0));
+        }
+
         for (const [uri, value] of this.knownRelations.entries()) {
-            const similarityScores = this.similarityConfigurations.map((c) => c.evaluate(input, value));
-            if (!bestSimilarity || similarityScores >= bestSimilarity) {
+            const similarityScores: number[] = [];
+            for (const conf of this.similarityConfigurations) {
+                const similarity = conf.evaluate(input, value);
+                if (!isNaN(similarity)) {
+                    similarityScores.push(similarity);
+                } else {
+                    break;
+                }
+            }
+
+            if (similarityScores.length === this.similarityConfigurations.length) {
                 queue.push(new RankedRelation(uri, similarityScores));
-                bestSimilarity = similarityScores;
             }
         }
+
+        const visited = new Set();
 
         while (queue.length > 0) {
             if (!this.activeQueries.has(input)) {
                 break;
             }
+
             const blob = queue.pop();
             if (!blob) {
                 continue;
             }
-            const { uri: page, scores } = blob;
-            if (bestSimilarity && scores < bestSimilarity) {
+
+            const { uri: page } = blob;
+            if (visited.has(page)) {
                 continue;
             }
+
+            visited.add(page);
             const data = await this.fetcher.get(page);
 
             const nodes = {};
@@ -128,14 +148,24 @@ export default class QueryAgent extends IQueryEmitter {
                 }
             }
 
-            for (const key of Object.keys(nodes)) {
-                const value = nodeValues[key];
-                this.knownRelations.set(nodes[key], value);
-                if (value) {
-                    const similarityScores = this.similarityConfigurations.map((c) => c.evaluate(input, value));
-                    if (!bestSimilarity || similarityScores >= bestSimilarity) {
-                        bestSimilarity = similarityScores;
-                        queue.push(new RankedRelation(nodes[key], similarityScores));
+            for (const [key, node] of Object.entries(nodes)) {
+                if (!visited.has(node)) {
+                    const value = nodeValues[key];
+                    this.knownRelations.set(node as string, value);
+                    if (value) {
+                        const similarityScores: number[] = [];
+                        for (const conf of this.similarityConfigurations) {
+                            const similarity = conf.evaluate(input, value);
+                            if (!isNaN(similarity)) {
+                                similarityScores.push(similarity);
+                            } else {
+                                break;
+                            }
+                        }
+
+                        if (similarityScores.length === this.similarityConfigurations.length) {
+                            queue.push(new RankedRelation(node, similarityScores));
+                        }
                     }
                 }
             }
