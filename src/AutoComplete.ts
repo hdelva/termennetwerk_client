@@ -2,7 +2,6 @@ import IQueryEmitter from "./IQueryEmitter";
 import NKFD from "./normalizers/NFKD";
 import QueryAgent from "./QueryAgent";
 import QueryAggregator from "./QueryAggregator";
-import QueryTokenizer from "./QueryTokenizer";
 import ResultRanking from "./ResultRanking";
 import ResultUniqueFilter from "./ResultUniqueFilter";
 import asymmetricDiceCoefficient from "./similarity/asymmetricDiceCoefficient";
@@ -11,42 +10,46 @@ import { SimilarityConfiguration } from "./similarity/SimilarityConfiguration";
 import strictPrefixSimilarity from "./similarity/strictPrefix";
 import tokenwiseCompare from "./similarity/tokenwise";
 
-function strictPrefix(expected: string, found: string): number {
+function strictRelationPrefix(expected: string, found: string): number {
+    return tokenwiseCompare(strictPrefixSimilarity, expected, found);
+}
+
+function strictResultPrefix(expected: string, found: string): number {
     // flip expected and found
     // we want `expected` to be a prefix of `found` 
     return tokenwiseCompare(strictPrefixSimilarity, found, expected);
 }
 
-function prefixFilter(expected: string, found: string, similarity: number): boolean {
+function prefixResultFilter(expected: string, found: string, similarity: number): boolean {
     return expected.replace(/\p{Z}/gu, "").length === similarity;
 }
 
-function prefix(expected: string, found: string): number {
+function prefixResult(expected: string, found: string): number {
     return tokenwiseCompare(commonPrefixSimilarity, expected, found);
 }
 
-function dice(expected: string, found: string): number {
+function diceResult(expected: string, found: string): number {
     return tokenwiseCompare(asymmetricDiceCoefficient, expected, found);
 }
 
-function length(expected: string, found: string): number {
+function lengthResult(expected: string, found: string): number {
     return -1 * found.length;
 }
 
 const fuzzyConfig = [
-    new SimilarityConfiguration(prefix),
-    new SimilarityConfiguration(dice),
-    new SimilarityConfiguration(length),
+    new SimilarityConfiguration(prefixResult),
+    new SimilarityConfiguration(diceResult),
+    new SimilarityConfiguration(lengthResult),
 ]
 
 const strictConfig = [
-    new SimilarityConfiguration(strictPrefix, prefixFilter),
-    new SimilarityConfiguration(dice),
-    new SimilarityConfiguration(length),
+    new SimilarityConfiguration(strictResultPrefix, prefixResultFilter),
+    new SimilarityConfiguration(diceResult),
+    new SimilarityConfiguration(lengthResult),
 ]
 
 const strictRelationConfig = [
-    new SimilarityConfiguration(strictPrefixSimilarity),
+    new SimilarityConfiguration(strictRelationPrefix),
 ]
 
 export default class AutoComplete extends IQueryEmitter {
@@ -61,8 +64,7 @@ export default class AutoComplete extends IQueryEmitter {
         }
 
         const aggregator = new QueryAggregator(agents);
-        const tokenizer = new QueryTokenizer(aggregator);
-        const filter = new ResultUniqueFilter(tokenizer);
+        const filter = new ResultUniqueFilter(aggregator);
 
         const sorted = new ResultRanking(
             size,

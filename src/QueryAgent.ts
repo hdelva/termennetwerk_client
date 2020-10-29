@@ -103,7 +103,6 @@ export default class QueryAgent extends IQueryEmitter {
             if (bestSimilarity && scores < bestSimilarity) {
                 continue;
             }
-            console.log("fetching", page);
             const data = await this.fetcher.get(page);
 
             const nodes = {};
@@ -115,7 +114,11 @@ export default class QueryAgent extends IQueryEmitter {
                 if (quad.predicate.value == "https://w3id.org/tree#node") {
                     nodes[quad.subject.value] = quad.object.value;
                 } else if (quad.predicate.value == "https://w3id.org/tree#value") {
-                    nodeValues[quad.subject.value] = quad.object.value;
+                    // be prepared for multiple values
+                    if (!nodeValues[quad.subject.value]) {
+                        nodeValues[quad.subject.value] = [];
+                    }
+                    nodeValues[quad.subject.value].push(quad.object.value);
                 } else if (quad.object.termType == "Literal" && quad.subject.termType === "NamedNode") {
                     const dataType = quad.object.datatype.value;
 
