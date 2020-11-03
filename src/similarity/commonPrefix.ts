@@ -1,7 +1,7 @@
 /*
  * Length of the common prefix
  */
-export function commonPrefixSimilarity(expected: string, found: string) {
+export default function commonPrefixSimilarity(expected: string, found: string) {
     const minLength = Math.min(expected.length, found.length);
 
     let common = 0;

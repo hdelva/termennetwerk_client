@@ -1,14 +1,15 @@
-import IQueryEmitter from "./IQueryEmitter";
-import NKFD from "./normalizers/NFKD";
-import QueryAgent from "./QueryAgent";
-import QueryAggregator from "./QueryAggregator";
-import ResultRanking from "./ResultRanking";
-import ResultUniqueFilter from "./ResultUniqueFilter";
-import asymmetricDiceCoefficient from "./similarity/asymmetricDiceCoefficient";
-import { commonPrefixSimilarity } from "./similarity/commonPrefix";
-import { SimilarityConfiguration } from "./similarity/SimilarityConfiguration";
-import strictPrefixSimilarity from "./similarity/strictPrefix";
-import tokenwiseCompare from "./similarity/tokenwise";
+import IQueryEmitter from "../ResultEmitter";
+import NKFD from "../normalizers/NFKD";
+import QueryAgent from "../QueryAgent";
+import QueryAggregator from "../QueryAggregator";
+import ResultRanking from "../ResultRanking";
+import ResultStore from "../ResultStore";
+import ResultUniqueFilter from "../ResultUniqueFilter";
+import asymmetricDiceCoefficient from "../similarity/asymmetricDiceCoefficient";
+import SimilarityConfiguration from "../similarity/SimilarityConfiguration";
+import strictPrefixSimilarity from "../similarity/strictPrefix";
+import tokenwiseCompare from "../similarity/tokenwise";
+import { Quad } from "rdf-js";
 
 function strictRelationPrefix(expected: string, found: string): number {
     return tokenwiseCompare(strictPrefixSimilarity, expected, found);
@@ -28,10 +29,6 @@ function prefixResultFilter(expected: string, found: string, similarity: number)
     return expected.replace(/\p{Z}/gu, "").length === similarity;
 }
 
-function prefixResult(expected: string, found: string): number {
-    return tokenwiseCompare(commonPrefixSimilarity, expected, found);
-}
-
 function diceResult(expected: string, found: string): number {
     return tokenwiseCompare(asymmetricDiceCoefficient, expected, found);
 }
@@ -39,12 +36,6 @@ function diceResult(expected: string, found: string): number {
 function lengthResult(expected: string, found: string): number {
     return -1 * found.length;
 }
-
-const fuzzyConfig = [
-    new SimilarityConfiguration(prefixResult),
-    new SimilarityConfiguration(diceResult),
-    new SimilarityConfiguration(lengthResult),
-]
 
 const strictConfig = [
     new SimilarityConfiguration(strictResultPrefix, prefixResultFilter),
@@ -56,7 +47,7 @@ const strictRelationConfig = [
     new SimilarityConfiguration(strictRelationPrefix, strictRelationFilter),
 ]
 
-export default class AutoComplete extends IQueryEmitter {
+export default class StrictAutoComplete extends IQueryEmitter {
     protected subEmitter: IQueryEmitter;
 
     constructor(sources: string[], size: number) {
@@ -68,7 +59,8 @@ export default class AutoComplete extends IQueryEmitter {
         }
 
         const aggregator = new QueryAggregator(agents);
-        const filter = new ResultUniqueFilter(aggregator);
+        const store = new ResultStore(aggregator);
+        const filter = new ResultUniqueFilter(store);
 
         const sorted = new ResultRanking(
             size,
@@ -84,6 +76,11 @@ export default class AutoComplete extends IQueryEmitter {
     }
 
     public async query(input: string) {
+        this.emit("reset")
         this.subEmitter.query(input);
+    }
+
+    public resolveSubject(uri: string): Quad[] {
+        return this.subEmitter.resolveSubject(uri);
     }
 }

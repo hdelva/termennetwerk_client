@@ -1,27 +1,34 @@
 {
-  "name": "tree_complete",
-  "version": "1.0.0",
-  "description": "",
+  "name": "@hdelva/termennetwerk_client",
+  "version": "2.0.0",
+  "description": "Proof of concept of client-side autocompletion",
   "main": "lib/index.js",
-  "scripts": {
-    "webpack": "webpack --config webpack.config.js --mode=production"
-  },
-  "author": "",
-  "license": "ISC",
+  "author": "Harm Delva",
+  "license": "MIT",
   "dependencies": {
-    "@types/node": "^12.12.14",
+    "@types/node": "^12.19.3",
     "@types/typescript": "^2.0.0",
     "collections": "^5.1.12",
     "ldfetch": "^1.1.2",
+    "n3": "^1.6.3",
     "rdf": "^4.1.0",
-    "rdf-string": "^1.5.0",
     "string-similarity": "^4.0.2",
-    "tinyqueue": "^2.0.3",
-    "webpack": "^4.0.0"
+    "tinyqueue": "^2.0.3"
   },
   "devDependencies": {
-    "ts-loader": "^8.0.5",
-    "webpack-cli": "^4.0.0",
-    "worker-loader": "^3.0.5"
-  }
+    "ts-loader": "^8.0.7"
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "prepublish": "tsc",
+  "types": "lib/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hdelva/tree_complete.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hdelva/tree_complete/issues"
+  },
+  "homepage": "https://github.com/hdelva/tree_complete#readme"
 }

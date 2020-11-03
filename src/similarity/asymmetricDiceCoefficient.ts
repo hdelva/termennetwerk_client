@@ -1,3 +1,5 @@
+// like the dice coefficient, but only looks for bigrams out of `expected` in `found`
+// this doesn't penalize longer results if we know the `expected` string is just incomplete
 export default function asymmetricDiceCoefficient(expected: string, found: string) {
     let firstBigrams = new Map();
     for (let i = 0; i < expected.length - 1; i++) {

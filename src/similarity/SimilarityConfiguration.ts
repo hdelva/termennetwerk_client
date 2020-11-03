@@ -1,6 +1,6 @@
 import { FilterFunction, SimilarityFunction } from "./SimilarityFunction";
 
-export class SimilarityConfiguration {
+export default class SimilarityConfiguration {
     private similarityFunction: SimilarityFunction;
     private filterFunction?: FilterFunction;
 
@@ -9,7 +9,9 @@ export class SimilarityConfiguration {
         this.filterFunction = filter;
     }
 
-    public evaluate(expected: string, found: string) {
+    public evaluate(expected: string, found: string): number {
+        // higher is better
+        // NaN indicates an ineligible result
         const similarity = this.similarityFunction(expected, found);
 
         if (this.filterFunction) {

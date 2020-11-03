@@ -2,12 +2,17 @@ const SortedArray = require("collections/sorted-array");
 
 import { Quad } from "rdf-js";
 
-import IQueryEmitter from "./IQueryEmitter";
+import ResultEmitter from "./ResultEmitter";
 import INormalizer from "./normalizers/INormalizer";
-import { SimilarityConfiguration } from "./similarity/SimilarityConfiguration";
+import SimilarityConfiguration from "./similarity/SimilarityConfiguration";
 
-export default class ResultRanking extends IQueryEmitter {
-    protected subEmitter: IQueryEmitter;
+/*
+ * Emits only the most relevant results from the subEmitter
+ * Emits "reset" events each time the top N results changes, 
+ * followed by "data" events for each result in the top N 
+ */
+export default class ResultRanking extends ResultEmitter {
+    protected subEmitter: ResultEmitter;
     protected activeQuery: string;
     protected size: number;
     protected currentBest: typeof SortedArray;
@@ -17,7 +22,7 @@ export default class ResultRanking extends IQueryEmitter {
 
     constructor(
         size: number,
-        subEmitter: IQueryEmitter,
+        subEmitter: ResultEmitter,
         normalizer: INormalizer,
         similarityConfigurations: SimilarityConfiguration[],
     ) {
@@ -33,20 +38,17 @@ export default class ResultRanking extends IQueryEmitter {
         const self = this;
         this.subEmitter = subEmitter;
         this.subEmitter.on("data", (q) => self.processQuad(q));
-        this.subEmitter.on("reset", () => self.reset());
         this.subEmitter.on("end", (uri) => self.emit("end", uri));
+        this.subEmitter.on("reset", () => self.emit("reset"));
     }
 
     public async query(input: string) {
+        this.emit("reset");
+        this.currentBest = new SortedArray();
         input = this.normalizer.normalize(input);
 
         this.activeQuery = input;
         this.subEmitter.query(input);
-    }
-
-    protected reset() {
-        this.currentBest = new SortedArray();
-        this.emit("reset");
     }
 
     protected processQuad(quad: Quad) {
@@ -101,6 +103,10 @@ export default class ResultRanking extends IQueryEmitter {
                 this.emitUpdate();
             }
         }
+    }
+
+    public resolveSubject(uri: string): Quad[] {
+        return this.subEmitter.resolveSubject(uri);
     }
 
     protected emitUpdate() {
