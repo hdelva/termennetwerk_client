@@ -1,6 +1,6 @@
 {
   "name": "@hdelva/termennetwerk_client",
-  "version": "2.0.0",
+  "version": "2.0.5",
   "description": "Proof of concept of client-side autocompletion",
   "main": "lib/index.js",
   "author": "Harm Delva",

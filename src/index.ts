@@ -13,8 +13,9 @@ import fuzzyPrefixSimilarity from "./similarity/fuzzyPrefix";
 import SimilarityConfiguration from "./similarity/SimilarityConfiguration";
 import strictPrefixSimilarity from "./similarity/strictPrefix";
 import tokenwiseCompare from "./similarity/tokenwise";
+import NFKD from "./normalizers/NFKD";
 
-export default {
+module.exports = {
     examples: {
         StrictAutoComplete,
         FuzzyAutoComplete,
@@ -27,6 +28,7 @@ export default {
         ResultStore,
         ResultUniqueFilter,
         SimilarityConfiguration,
+        NFKD,
     },
     similarityFunctions: {
         asymmetricDiceCoefficient,
@@ -36,4 +38,4 @@ export default {
         strictPrefixSimilarity,
         tokenwiseCompare,
     }
-};
+}
