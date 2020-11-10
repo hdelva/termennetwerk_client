@@ -1,3 +1,4 @@
+import { Quad } from "rdf-js";
 import { FilterFunction, SimilarityFunction } from "./SimilarityFunction";
 
 export default class SimilarityConfiguration {
@@ -9,10 +10,10 @@ export default class SimilarityConfiguration {
         this.filterFunction = filter;
     }
 
-    public evaluate(expected: string, found: string): number {
+    public evaluate(expected: string, found: string, quad?: Quad): number {
         // higher is better
         // NaN indicates an ineligible result
-        const similarity = this.similarityFunction(expected, found);
+        const similarity = this.similarityFunction(expected, found, quad);
 
         if (this.filterFunction) {
             if (!this.filterFunction(expected, found, similarity)) {

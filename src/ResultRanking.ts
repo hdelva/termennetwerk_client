@@ -71,7 +71,7 @@ export default class ResultRanking extends ResultEmitter {
             const configuration = this.similarityConfigurations[i];
 
             // flip sign, because we order increasingly
-            let similarity = -1 * configuration.evaluate(this.activeQuery, value);
+            let similarity = -1 * configuration.evaluate(this.activeQuery, value, quad);
 
             // it's not similar enough to include in the results
             if (isNaN(similarity)) {

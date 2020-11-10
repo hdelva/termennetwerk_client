@@ -28,8 +28,8 @@ function diceResult(expected: string, found: string): number {
     return tokenwiseCompare(asymmetricDiceCoefficient, expected, found);
 }
 
-function lengthResult(expected: string, found: string): number {
-    return -1 * found.length;
+function lengthResult(expected: string, found: string, quad?: Quad): number {
+    return quad ? -1 * quad.object.value.length : -1 * found.length;
 }
 
 const fuzzyConfig = [
