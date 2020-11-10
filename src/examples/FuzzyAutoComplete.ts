@@ -65,7 +65,7 @@ export default class FuzzyAutoComplete extends IQueryEmitter {
         );
         this.subEmitter = sorted;
 
-        this.subEmitter.on("data", (data) => this.emit("data", data));
+        this.subEmitter.on("data", (data, meta) => this.emit("data", data, meta));
         this.subEmitter.on("end", (data) => this.emit("end", data));
         this.subEmitter.on("reset", () => this.emit("reset"));
     }

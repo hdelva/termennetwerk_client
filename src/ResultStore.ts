@@ -2,6 +2,7 @@ import { Quad } from "rdf-js";
 
 import ResultEmitter from "./ResultEmitter";
 import N3 = require('n3');
+import ResultMetadata from "./ResultMetadata";
 
 /*
  * Intercepts all data from the subEmitter, and only reemits the literal quads
@@ -17,7 +18,7 @@ export default class ResultStore extends ResultEmitter {
         this.store = new N3.Store();
 
         const self = this;
-        this.subEmitter.on("data", (q) => self.processQuad(q));
+        this.subEmitter.on("data", (q, meta) => self.processQuad(q, meta));
         this.subEmitter.on("end", (uri) => self.emit("end", uri));
         this.subEmitter.on("reset", () => self.emit("reset"));
     }
@@ -32,13 +33,13 @@ export default class ResultStore extends ResultEmitter {
         return this.store.getQuads(uri, null, null, null);
     }
 
-    protected processQuad(quad: Quad) {
+    protected processQuad(quad: Quad, meta: ResultMetadata) {
         this.store.addQuad(quad);
         if (quad.object.termType == "Literal" && quad.subject.termType === "NamedNode") {
             const dataType = quad.object.datatype.value;
 
             if (dataType == "http://www.w3.org/2001/XMLSchema#string" || dataType == "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString") {
-                this.emit("data", quad);
+                this.emit("data", quad, meta);
             }
         }
     }

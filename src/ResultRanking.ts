@@ -5,6 +5,7 @@ import { Quad } from "rdf-js";
 import ResultEmitter from "./ResultEmitter";
 import INormalizer from "./normalizers/INormalizer";
 import SimilarityConfiguration from "./similarity/SimilarityConfiguration";
+import ResultMetadata from "./ResultMetadata";
 
 /*
  * Emits only the most relevant results from the subEmitter
@@ -13,7 +14,8 @@ import SimilarityConfiguration from "./similarity/SimilarityConfiguration";
  */
 export default class ResultRanking extends ResultEmitter {
     protected subEmitter: ResultEmitter;
-    protected activeQuery: string;
+    protected normalizedQuery: string;
+    protected rawQuery: string;
     protected size: number;
     protected currentBest: typeof SortedArray;
     protected similarityConfigurations: SimilarityConfiguration[];
@@ -32,25 +34,27 @@ export default class ResultRanking extends ResultEmitter {
         this.normalizer = normalizer;
         this.similarityConfigurations = similarityConfigurations;
 
-        this.activeQuery = "";
+        this.normalizedQuery = "";
+        this.rawQuery = "";
         this.currentBest = new SortedArray();
 
         const self = this;
         this.subEmitter = subEmitter;
-        this.subEmitter.on("data", (q) => self.processQuad(q));
+        this.subEmitter.on("data", (q, _) => self.processQuad(q)); // ignore existing metadata, we add our own
         this.subEmitter.on("end", (uri) => self.emit("end", uri));
         this.subEmitter.on("reset", () => self.emit("reset"));
     }
 
     public async query(input: string) {
-        input = this.normalizer.normalize(input);
+        const normalizedInput = this.normalizer.normalize(input);
 
-        if (this.activeQuery === input) {
+        if (this.normalizedQuery === input) {
             this.emitUpdate();
         } else {
             this.emit("reset");
             this.currentBest = new SortedArray();
-            this.activeQuery = input;
+            this.rawQuery = input;
+            this.normalizedQuery = normalizedInput;
             this.subEmitter.query(input);
         }
     }
@@ -62,7 +66,8 @@ export default class ResultRanking extends ResultEmitter {
             thresholdVector = this.currentBest.toArray()[relevantIndex - 1];
         }
 
-        let value = this.normalizer.normalize(quad.object.value);
+        let rawValue = quad.object.value;
+        let normalizedValue = this.normalizer.normalize(rawValue);
 
         let better = false;
         let eligible = true;
@@ -71,7 +76,7 @@ export default class ResultRanking extends ResultEmitter {
             const configuration = this.similarityConfigurations[i];
 
             // flip sign, because we order increasingly
-            let similarity = -1 * configuration.evaluate(this.activeQuery, value, quad);
+            let similarity = -1 * configuration.evaluate(this.normalizedQuery, normalizedValue, quad);
 
             // it's not similar enough to include in the results
             if (isNaN(similarity)) {
@@ -95,10 +100,12 @@ export default class ResultRanking extends ResultEmitter {
             }
         }
 
+        // if all configured metrics are as good as the threshold value
         if (eligible && similarityVector.length === this.similarityConfigurations.length) {
-            // all configured metrics are as good as the threshold value
+            const overlapVector = this.findOverlap(this.rawQuery, rawValue);
+
             // add the string value and quad object as tie breakers
-            const fullVector = [...similarityVector, value, quad];
+            const fullVector = [...similarityVector, normalizedValue, overlapVector, quad];
 
             let better = this.currentBest.contentCompare(thresholdVector, fullVector) > 0;
 
@@ -113,11 +120,51 @@ export default class ResultRanking extends ResultEmitter {
         return this.subEmitter.resolveSubject(uri);
     }
 
+    protected findOverlap(expected: string, found: string): Array<[number, number]> {
+        const result: Array<[number, number]> = [];
+        const expectedTokens = expected.split(/\s/);
+        const foundTokens = found.split(/\s/);
+
+        for (const expectedToken of expectedTokens) {
+            const normalizedExpected = this.normalizer.normalize(expectedToken);
+            for (const foundToken of foundTokens) {
+                const normalizedFound = this.normalizer.normalize(foundToken);
+
+                if (normalizedFound.startsWith(normalizedExpected)) {
+                    let beginIndex = found.indexOf(foundToken)
+
+                    let currentToken = this.normalizer.normalize(found[beginIndex]);
+                    while (currentToken && currentToken !== normalizedFound[0]) {
+                        beginIndex += 1;
+                        currentToken = this.normalizer.normalize(found[beginIndex]);
+                    }
+
+                    let endIndex = beginIndex + normalizedExpected.length - 1;
+                    currentToken = this.normalizer.normalize(found[endIndex]);
+                    while (currentToken && currentToken !== normalizedFound[normalizedExpected.length - 1]) {
+                        endIndex += 1;
+                        currentToken = this.normalizer.normalize(found[endIndex]);
+                    }
+
+                    if (beginIndex < found.length && beginIndex <= endIndex) {
+                        result.push([beginIndex, endIndex]);
+                    }
+                }
+            }
+        }
+
+
+        return result;
+    }
+
     protected emitUpdate() {
         this.emit("reset");
         const output = this.currentBest.toArray().slice(0, this.size);
         for (const vector of output) {
-            this.emit("data", vector[vector.length - 1]);
+            const quad = vector[vector.length - 1];
+            const overlapVector = vector[vector.length - 2];
+            const similarityVector = vector.slice(0, vector.length - 2);
+            this.emit("data", quad, new ResultMetadata(overlapVector, similarityVector));
         }
     }
 }

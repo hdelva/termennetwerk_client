@@ -15,7 +15,7 @@ export default class QueryAggregator extends ResultEmitter {
 
         const self = this;
         for (const source of this.subEmitters) {
-            source.on("data", (q) => self.emit("data", q));
+            source.on("data", (q, meta) => self.emit("data", q, meta));
             source.on("end", (q) => self.processEnd(q));
         }
     }
