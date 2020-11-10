@@ -1,41 +1,18 @@
-import FuzzyAutoComplete from "./examples/FuzzyAutoComplete";
-import StrictAutoComplete from "./examples/StrictAutoComplete";
-import QueryAgent from "./QueryAgent";
-import QueryAggregator from "./QueryAggregator";
-import ResultEmitter from "./ResultEmitter";
-import ResultRanking from "./ResultRanking";
-import ResultStore from "./ResultStore";
-import ResultUniqueFilter from "./ResultUniqueFilter";
-import asymmetricDiceCoefficient from "./similarity/asymmetricDiceCoefficient";
-import commonPrefixSimilarity from "./similarity/commonPrefix";
-import fuzzyIndexSimilarity from "./similarity/fuzzyIndex";
-import fuzzyPrefixSimilarity from "./similarity/fuzzyPrefix";
-import SimilarityConfiguration from "./similarity/SimilarityConfiguration";
-import strictPrefixSimilarity from "./similarity/strictPrefix";
-import tokenwiseCompare from "./similarity/tokenwise";
-import NFKD from "./normalizers/NFKD";
+export { default as FuzzyAutoComplete } from "./examples/FuzzyAutoComplete";
+export { default as StrictAutoComplete } from "./examples/StrictAutoComplete";
 
-module.exports = {
-    examples: {
-        StrictAutoComplete,
-        FuzzyAutoComplete,
-    },
-    components: {
-        QueryAgent,
-        QueryAggregator,
-        ResultEmitter,
-        ResultRanking,
-        ResultStore,
-        ResultUniqueFilter,
-        SimilarityConfiguration,
-        NFKD,
-    },
-    similarityFunctions: {
-        asymmetricDiceCoefficient,
-        commonPrefixSimilarity,
-        fuzzyIndexSimilarity,
-        fuzzyPrefixSimilarity,
-        strictPrefixSimilarity,
-        tokenwiseCompare,
-    }
-}
+export { default as QueryAgent } from "./QueryAgent";
+export { default as QueryAggregator } from "./QueryAggregator";
+export { default as ResultEmitter } from "./ResultEmitter";
+export { default as ResultRanking } from "./ResultRanking";
+export { default as ResultStore } from "./ResultStore";
+export { default as ResultUniqueFilter } from "./ResultUniqueFilter";
+export { default as SimilarityConfiguration } from "./similarity/SimilarityConfiguration";
+export { default as NFKD } from "./normalizers/NFKD";
+
+export { default as asymmetricDiceCoefficient } from "./similarity/asymmetricDiceCoefficient";
+export { default as commonPrefixSimilarity } from "./similarity/commonPrefix";
+export { default as fuzzyIndexSimilarity } from "./similarity/fuzzyIndex";
+export { default as fuzzyPrefixSimilarity } from "./similarity/fuzzyPrefix";
+export { default as strictPrefixSimilarity } from "./similarity/strictPrefix";
+export { default as tokenwiseCompare } from "./similarity/tokenwise";
