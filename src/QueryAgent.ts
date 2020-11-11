@@ -189,7 +189,7 @@ export default class QueryAgent extends ResultEmitter {
 
         // signal that we're done following links
         this.activeQueries.delete(input);
-        this.emit("end", input);
+        this.emit("end", new ResultMetadata(input));
     }
 
     public resolveSubject(uri: string): Quad[] {

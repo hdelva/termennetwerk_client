@@ -18,7 +18,7 @@ export default class ResultUniqueFilter extends ResultEmitter {
 
         const self = this;
         this.subEmitter.on("data", (q, meta) => self.processQuad(q, meta));
-        this.subEmitter.on("end", (uri) => self.emit("end", uri));
+        this.subEmitter.on("end", (meta) => self.emit("end", meta));
     }
 
     public async query(input: string) {

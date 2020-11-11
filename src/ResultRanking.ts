@@ -41,7 +41,7 @@ export default class ResultRanking extends ResultEmitter {
         const self = this;
         this.subEmitter = subEmitter;
         this.subEmitter.on("data", (q, _) => self.processQuad(q)); // ignore existing metadata, we add our own
-        this.subEmitter.on("end", (uri) => self.emit("end", uri));
+        this.subEmitter.on("end", (meta) => self.emit("end", meta));
     }
 
     public async query(input: string) {

@@ -17,7 +17,7 @@ export default class QueryAggregator extends ResultEmitter {
         const self = this;
         for (const source of this.subEmitters) {
             source.on("data", (q, meta) => self.emit("data", q, meta));
-            source.on("end", (q) => self.processEnd(q));
+            source.on("end", (meta) => self.processEnd(meta));
         }
     }
 
@@ -36,15 +36,18 @@ export default class QueryAggregator extends ResultEmitter {
         return result;
     }
 
-    protected processEnd(query: string) {
-        let count = this.finished.get(query) || 0;
-        count += 1;
+    protected processEnd(meta: ResultMetadata) {
+        const query = meta.query;
+        if (query) {
+            let count = this.finished.get(query) || 0;
+            count += 1;
 
-        if (count === this.subEmitters.length) {
-            this.finished.delete(query);
-            this.emit("end", query);
-        } else {
-            this.finished.set(query, count);
+            if (count === this.subEmitters.length) {
+                this.finished.delete(query);
+                this.emit("end", new ResultMetadata(query));
+            } else {
+                this.finished.set(query, count);
+            }
         }
     }
 }
