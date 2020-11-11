@@ -80,7 +80,7 @@ export default class QueryAgent extends ResultEmitter {
 
     public async query(input: string) {
         // signal other components to reset their internal state
-        this.emit("reset");
+        this.emit("reset", new ResultMetadata(input));
 
         for (const runningQuery of this.activeQueries) {
             if (input.startsWith(runningQuery) || runningQuery.startsWith(input)) {

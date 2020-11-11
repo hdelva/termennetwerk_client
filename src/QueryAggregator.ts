@@ -1,5 +1,6 @@
 import ResultEmitter from "./ResultEmitter";
 import { Quad } from "rdf-js";
+import ResultMetadata from "./ResultMetadata";
 
 /*
  * Merges results from multiple other emitters
@@ -21,7 +22,7 @@ export default class QueryAggregator extends ResultEmitter {
     }
 
     public async query(input: string) {
-        this.emit("reset");
+        this.emit("reset", new ResultMetadata(input));
         for (const source of this.subEmitters) {
             source.query(input);
         }

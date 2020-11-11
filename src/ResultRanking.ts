@@ -42,7 +42,6 @@ export default class ResultRanking extends ResultEmitter {
         this.subEmitter = subEmitter;
         this.subEmitter.on("data", (q, _) => self.processQuad(q)); // ignore existing metadata, we add our own
         this.subEmitter.on("end", (uri) => self.emit("end", uri));
-        this.subEmitter.on("reset", () => self.emit("reset"));
     }
 
     public async query(input: string) {
@@ -51,7 +50,7 @@ export default class ResultRanking extends ResultEmitter {
         if (this.normalizedQuery === normalizedInput) {
             this.emitUpdate(input);
         } else {
-            this.emit("reset");
+            this.emit("reset", new ResultMetadata(input));
             this.currentBest = new SortedArray();
             this.rawQuery = input;
             this.normalizedQuery = normalizedInput;
@@ -158,7 +157,7 @@ export default class ResultRanking extends ResultEmitter {
     }
 
     protected emitUpdate(query: string) {
-        this.emit("reset");
+        this.emit("reset", new ResultMetadata(this.rawQuery));
         const output = this.currentBest.toArray().slice(0, this.size);
         for (const vector of output) {
             const quad = vector[vector.length - 1];

@@ -10,6 +10,7 @@ import SimilarityConfiguration from "../similarity/SimilarityConfiguration";
 import strictPrefixSimilarity from "../similarity/strictPrefix";
 import tokenwiseCompare from "../similarity/tokenwise";
 import { Quad } from "rdf-js";
+import ResultMetadata from "../ResultMetadata";
 
 function strictRelationPrefix(expected: string, found: string): number {
     return tokenwiseCompare(strictPrefixSimilarity, expected, found);
@@ -72,11 +73,11 @@ export default class StrictAutoComplete extends IQueryEmitter {
 
         this.subEmitter.on("data", (data, meta) => this.emit("data", data, meta));
         this.subEmitter.on("end", (data) => this.emit("end", data));
-        this.subEmitter.on("reset", () => this.emit("reset"));
+        this.subEmitter.on("reset", (meta) => this.emit("reset", meta));
     }
 
     public async query(input: string) {
-        this.emit("reset")
+        this.emit("reset", new ResultMetadata(input));
         this.subEmitter.query(input);
     }
 

@@ -11,6 +11,7 @@ import SimilarityConfiguration from "../similarity/SimilarityConfiguration";
 import tokenwiseCompare from "../similarity/tokenwise";
 import { Quad } from "rdf-js";
 import fuzzyIndexSimilarity from "../similarity/fuzzyIndex";
+import ResultMetadata from "../ResultMetadata";
 
 function fuzzyRelationIndex(expected: string, found: string): number {
     return tokenwiseCompare(fuzzyIndexSimilarity, expected, found);
@@ -67,11 +68,11 @@ export default class FuzzyAutoComplete extends IQueryEmitter {
 
         this.subEmitter.on("data", (data, meta) => this.emit("data", data, meta));
         this.subEmitter.on("end", (data) => this.emit("end", data));
-        this.subEmitter.on("reset", () => this.emit("reset"));
+        this.subEmitter.on("reset", (meta) => this.emit("reset", meta));
     }
 
     public async query(input: string) {
-        this.emit("reset")
+        this.emit("reset", new ResultMetadata(input));
         this.subEmitter.query(input);
     }
 

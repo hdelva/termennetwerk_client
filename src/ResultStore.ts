@@ -20,11 +20,10 @@ export default class ResultStore extends ResultEmitter {
         const self = this;
         this.subEmitter.on("data", (q, meta) => self.processQuad(q, meta));
         this.subEmitter.on("end", (uri) => self.emit("end", uri));
-        this.subEmitter.on("reset", () => self.emit("reset"));
     }
 
     public async query(input: string) {
-        this.emit("reset");
+        this.emit("reset", new ResultMetadata(input));
         this.store = new N3.Store();
         this.subEmitter.query(input);
     }
