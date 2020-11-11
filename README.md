@@ -32,7 +32,7 @@ client.on("reset", (_meta) => {
     console.clear();
 })
 
-client.on("end", () => {
+client.on("end", (_meta) => {
     //
 })
 ```
@@ -97,7 +97,7 @@ export default class FuzzyAutoComplete extends AutoComplete.ResultEmitter {
         this.subEmitter = sorted;
 
         this.subEmitter.on("data", (data, meta) => this.emit("data", data, meta));
-        this.subEmitter.on("end", (query) => this.emit("end", query));
+        this.subEmitter.on("end", (meta) => this.emit("end", meta));
         this.subEmitter.on("reset", (meta) => this.emit("reset", meta));
     }
 
