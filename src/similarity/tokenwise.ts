@@ -12,14 +12,14 @@ export default function tokenwiseCompare(
     if (Array.isArray(expected)) {
         expectedTokens = expected;
     } else {
-        expectedTokens = expected.split(/\s/);
+        expectedTokens = expected.trim().split(/\s/);
     }
 
     let foundTokens: string[];
     if (Array.isArray(found)) {
         foundTokens = found;
     } else {
-        foundTokens = found.split(/\s/);
+        foundTokens = found.trim().split(/\s/);
     }
 
     // for each expected token, calculate how similar the most similar found token is

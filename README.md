@@ -13,18 +13,18 @@ Imagine a jQuery-style autocompletion widget without hardcoded options, which ca
 ### Using one of the preconfigured clients
 
 ```javascript
-import AutoComplete from "@hdelva/termennetwerk_client";
+import * as AutoComplete from "@hdelva/termennetwerk_client";
 import * as RdfString from "rdf-string";
 
 // creates a client that traverses 4 datasets for the 10 best results
-const client = new AutoComplete.examples.StrictAutoComplete([
+const client = new AutoComplete.StrictAutoComplete([
     "https://termen.opoi.org/nta",
     "https://termen.opoi.org/vtmk",
     "https://termen.opoi.org/cht",
     "https://termen.opoi.org/rkdartists"
 ], 10);
 
-client.on("data", (quad) => {
+client.on("data", (quad, _meta) => {
     console.log(quad.subject.value);
 })
 
@@ -40,11 +40,11 @@ client.on("end", () => {
 ## Build your own
 
 ```javascript
-import { similarityFunctions, components } from "@hdelva/termennetwerk_client";
+import * as AutoComplete from "@hdelva/termennetwerk_client";
 
 function relationSimilarity(expected, found) {
-    return similarityFunctions.tokenwiseCompare(
-        similarityFunctions.fuzzyIndexSimilarity,
+    return AutoComplete.tokenwiseCompare(
+        AutoComplete.fuzzyIndexSimilarity,
         expected,
         found,
     );
@@ -55,8 +55,8 @@ function relationFilter(_, __, similarity) {
 }
 
 function resultSimilarity(expected, found) {
-    return similarityFunctions.tokenwiseCompare(
-        similarityFunctions.asymmetricDiceCoefficient,
+    return AutoComplete.tokenwiseCompare(
+        AutoComplete.asymmetricDiceCoefficient,
         expected,
         found,
     );
@@ -67,37 +67,37 @@ function lengthResult(_, found) {
 }
 
 const resultConfigurations = [
-    new components.SimilarityConfiguration(resultSimilarity),
-    new components.SimilarityConfiguration(lengthResult),
+    new AutoComplete.SimilarityConfiguration(resultSimilarity),
+    new AutoComplete.SimilarityConfiguration(lengthResult),
 ]
 
 const relationConfigurations = [
-    new components.SimilarityConfiguration(relationSimilarity, relationFilter),
+    new AutoComplete.SimilarityConfiguration(relationSimilarity, relationFilter),
 ]
 
-export default class FuzzyAutoComplete extends components.ResultEmitter {
+export default class FuzzyAutoComplete extends AutoComplete.ResultEmitter {
     constructor(sources, size) {
         super();
 
         const agents = [];
         for (const source of sources) {
-            agents.push(new components.QueryAgent(source, relationConfigurations));
+            agents.push(new AutoComplete.QueryAgent(source, relationConfigurations));
         }
 
-        const aggregator = new components.QueryAggregator(agents);
-        const store = new components.ResultStore(aggregator);
-        const filter = new components.ResultUniqueFilter(store);
+        const aggregator = new AutoComplete.QueryAggregator(agents);
+        const store = new AutoComplete.ResultStore(aggregator);
+        const filter = new AutoComplete.ResultUniqueFilter(store);
 
-        const sorted = new components.ResultRanking(
+        const sorted = new AutoComplete.ResultRanking(
             size,
             filter,
-            new components.NFKD(),
+            new AutoComplete.NFKD(),
             resultConfigurations
         );
         this.subEmitter = sorted;
 
-        this.subEmitter.on("data", (data) => this.emit("data", data));
-        this.subEmitter.on("end", (data) => this.emit("end", data));
+        this.subEmitter.on("data", (data, meta) => this.emit("data", data, meta));
+        this.subEmitter.on("end", (query) => this.emit("end", query));
         this.subEmitter.on("reset", () => this.emit("reset"));
     }
 

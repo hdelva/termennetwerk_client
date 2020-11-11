@@ -12,6 +12,9 @@ export default class NKFD implements INormalizer {
     }
 
     public normalize(input: string): string {
+        if (!input) {
+            let a = 9;
+        }
         input = input.trim(); // get rid of whitespace
         input = input.toLowerCase();
         input = input.normalize("NFKD"); // normalize diacritics

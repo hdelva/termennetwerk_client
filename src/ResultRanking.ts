@@ -122,8 +122,8 @@ export default class ResultRanking extends ResultEmitter {
 
     protected findOverlap(expected: string, found: string): Array<[number, number]> {
         const result: Array<[number, number]> = [];
-        const expectedTokens = expected.split(/\s/);
-        const foundTokens = found.split(/\s/);
+        const expectedTokens = expected.trim().split(/\s/);
+        const foundTokens = found.trim().split(/\s/);
 
         for (const expectedToken of expectedTokens) {
             const normalizedExpected = this.normalizer.normalize(expectedToken);
