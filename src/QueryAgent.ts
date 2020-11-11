@@ -3,6 +3,7 @@ import { Quad } from "rdf-js";
 import TinyQueue from "tinyqueue";
 
 import ResultEmitter from "./ResultEmitter";
+import ResultMetadata from "./ResultMetadata";
 import SimilarityConfiguration from "./similarity/SimilarityConfiguration";
 
 class RankedRelation {
@@ -154,7 +155,7 @@ export default class QueryAgent extends ResultEmitter {
                     }
                     nodeValues[quad.subject.value].push(quad.object.value);
                 } else {
-                    this.emit("data", quad);
+                    this.emit("data", quad, new ResultMetadata(input));
                 }
             }
 

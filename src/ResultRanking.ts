@@ -48,8 +48,8 @@ export default class ResultRanking extends ResultEmitter {
     public async query(input: string) {
         const normalizedInput = this.normalizer.normalize(input);
 
-        if (this.normalizedQuery === input) {
-            this.emitUpdate();
+        if (this.normalizedQuery === normalizedInput) {
+            this.emitUpdate(input);
         } else {
             this.emit("reset");
             this.currentBest = new SortedArray();
@@ -111,7 +111,7 @@ export default class ResultRanking extends ResultEmitter {
 
             if (better || this.currentBest.length < this.size) {
                 this.currentBest.push(fullVector);
-                this.emitUpdate();
+                this.emitUpdate(this.rawQuery);
             }
         }
     }
@@ -157,14 +157,14 @@ export default class ResultRanking extends ResultEmitter {
         return result;
     }
 
-    protected emitUpdate() {
+    protected emitUpdate(query: string) {
         this.emit("reset");
         const output = this.currentBest.toArray().slice(0, this.size);
         for (const vector of output) {
             const quad = vector[vector.length - 1];
             const overlapVector = vector[vector.length - 2];
             const similarityVector = vector.slice(0, vector.length - 2);
-            this.emit("data", quad, new ResultMetadata(overlapVector, similarityVector));
+            this.emit("data", quad, new ResultMetadata(query, overlapVector, similarityVector));
         }
     }
 }

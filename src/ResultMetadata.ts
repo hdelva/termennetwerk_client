@@ -1,8 +1,10 @@
 export default class ResultMetadata {
-    public overlap: Array<[number, number]>;
-    public similarity: Array<number>;
+    public overlap?: Array<[number, number]>;
+    public similarity?: Array<number>;
+    public query?: string;
 
-    constructor(overlap, similarity) {
+    constructor(query: string, overlap?: Array<[number, number]>, similarity?: Array<number>) {
+        this.query = query;
         this.overlap = overlap;
         this.similarity = similarity;
     }
