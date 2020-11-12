@@ -46,16 +46,12 @@ export default class ResultRanking extends ResultEmitter {
 
     public async query(input: string) {
         const normalizedInput = this.normalizer.normalize(input);
-
-        if (this.normalizedQuery === normalizedInput) {
-            this.emitUpdate(input);
-        } else {
-            this.emit("reset", new ResultMetadata(input));
-            this.currentBest = new SortedArray();
-            this.rawQuery = input;
-            this.normalizedQuery = normalizedInput;
-            this.subEmitter.query(input);
-        }
+        
+        this.emit("reset", new ResultMetadata(input));
+        this.currentBest = new SortedArray();
+        this.rawQuery = input;
+        this.normalizedQuery = normalizedInput;
+        this.subEmitter.query(normalizedInput);
     }
 
     protected processQuad(quad: Quad) {
