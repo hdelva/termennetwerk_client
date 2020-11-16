@@ -17,17 +17,47 @@ function strictRelationPrefix(expected: string, found: string): number {
 }
 
 function strictRelationFilter(expected: string, found: string, similarity: number): boolean {
+    // one of the expected tokens has been matched, so this relation can be relevant
     return similarity > 0;
 }
 
+// returns how many of the `expected` string's tokens are present in the `found` string
+// it allows 1 token be incomplete if it is a prefix
 function strictResultPrefix(expected: string, found: string): number {
-    // flip expected and found
-    // we want `expected` to be a prefix of `found` 
-    return tokenwiseCompare(strictPrefixSimilarity, found, expected);
+    const maxPrefixTolerance = 1; // how many prefix matches do we tolerate
+    let prefixTolerance = 0; // how many prefix matches do we have so far
+
+    // count how many times we expect to find each token
+    let expectedTokens: Map<string, number> = new Map();
+    for (const token of expected.trim().split(/\s/)) {
+        const count = expectedTokens.get(token) || 0;
+        expectedTokens.set(token, count + 1);
+    }
+
+    const foundTokens = found.trim().split(/\s/);
+
+    let score = 0;
+    for (const [token, expectedCount] of expectedTokens.entries()) {
+        let count = 0;
+        for (const foundToken of foundTokens) {
+            if (foundToken === token) {
+                count ++;
+            } else if (prefixTolerance < maxPrefixTolerance && foundToken.startsWith(token)) {
+                prefixTolerance++;
+                count++;
+            }
+        }
+        if (count >= expectedCount) {
+            score += expectedCount;
+        }
+    }
+
+    return score;
 }
 
 function prefixResultFilter(expected: string, found: string, similarity: number): boolean {
-    return expected.replace(/\p{Z}/gu, "").length === similarity;
+    // each token must be accounted for
+    return expected.trim().split(/\s/).length === similarity;
 }
 
 function diceResult(expected: string, found: string): number {
